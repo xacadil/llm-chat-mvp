@@ -52,31 +52,60 @@ export default function ConversationalSurvey({ survey }: ConversationalSurveyPro
 
   // Initialize with welcome
   useEffect(() => {
+    // Find first non-info question
+    const firstRealQuestionIndex = survey.questions.findIndex(q => q.type !== 'info');
+    const firstRealQuestion = survey.questions[firstRealQuestionIndex];
+
+    // Skip info questions and start with first real question
+    if (firstRealQuestionIndex > 0) {
+      setState({
+        currentQuestionIndex: firstRealQuestionIndex,
+        responses: [],
+        isComplete: false,
+      });
+    }
+
+    // Create natural welcome that leads into first question
     const welcomeMessages: Message[] = [
       {
         id: 'welcome-1',
         role: 'assistant',
-        content: `Hi! 👋 Welcome to the ${survey.title}.`,
+        content: `Hi! 👋 I'm your personal health assistant.`,
         timestamp: new Date(),
       },
       {
         id: 'welcome-2',
         role: 'assistant',
-        content: survey.description || "I'll ask you a few questions. You can click the buttons or just type your answer naturally - whatever feels easier!",
+        content: "I'd like to learn about how you're feeling today. This will only take a few minutes, and you can answer however you prefer - click the buttons or just type naturally.",
         timestamp: new Date(),
       },
     ];
 
     setTimeout(() => {
-      askQuestion(currentQuestion, welcomeMessages);
+      const questionToAsk = firstRealQuestionIndex >= 0 ? firstRealQuestion : currentQuestion;
+      askNaturalQuestion(questionToAsk, welcomeMessages);
     }, 1000);
   }, []);
 
-  const askQuestion = (question: Question, previousMessages: Message[] = messages) => {
+  const askNaturalQuestion = (question: Question, previousMessages: Message[] = messages) => {
+    // Make questions sound more conversational
+    let naturalContent = question.question;
+
+    // Add conversational flair based on question type
+    if (question.type === 'radio' && question.id === 'q1') {
+      naturalContent = "So, let's start with the basics - how are you feeling today?";
+    } else if (question.type === 'slider') {
+      naturalContent = question.question.replace('On a scale of', "I'd like to know on a scale of");
+    } else if (question.type === 'image_pin') {
+      naturalContent = question.question.replace('Please indicate', "Could you show me");
+    } else if (question.type === 'text') {
+      naturalContent = question.question;
+    }
+
     const questionMessage: Message = {
       id: `q-${question.id}`,
       role: 'assistant',
-      content: question.question,
+      content: naturalContent,
       timestamp: new Date(),
       questionId: question.id,
       showQuickReplies: question.type === 'radio',
@@ -84,6 +113,10 @@ export default function ConversationalSurvey({ survey }: ConversationalSurveyPro
     };
 
     setMessages([...previousMessages, questionMessage]);
+  };
+
+  const askQuestion = (question: Question, previousMessages: Message[] = messages) => {
+    askNaturalQuestion(question, previousMessages);
   };
 
   const handleQuickReply = async (value: string) => {
