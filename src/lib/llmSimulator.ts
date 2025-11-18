@@ -21,6 +21,47 @@ function processRadioResponse(
 ): LLMResponse {
   const input = userInput.toLowerCase().trim();
 
+  // Handle common idiomatic expressions FIRST (before keyword matching)
+  // These need special handling because they contain contradictory keywords
+  const idiomaticPhrases: Record<string, { targetOption: string; confidence: number }> = {
+    'not too bad': { targetOption: 'good', confidence: 0.85 },
+    'not bad': { targetOption: 'good', confidence: 0.85 },
+    'pretty good': { targetOption: 'good', confidence: 0.9 },
+    'pretty well': { targetOption: 'good', confidence: 0.9 },
+    'doing well': { targetOption: 'good', confidence: 0.95 },
+    'doing fine': { targetOption: 'good', confidence: 0.9 },
+    'can\'t complain': { targetOption: 'good', confidence: 0.8 },
+    'could be worse': { targetOption: 'okay', confidence: 0.75 },
+    'could be better': { targetOption: 'okay', confidence: 0.75 },
+    'hanging in there': { targetOption: 'okay', confidence: 0.75 },
+    'getting by': { targetOption: 'okay', confidence: 0.75 },
+    'so-so': { targetOption: 'okay', confidence: 0.9 },
+    'not great': { targetOption: 'not so good', confidence: 0.8 },
+    'not feeling great': { targetOption: 'not so good', confidence: 0.85 },
+    'bit rough': { targetOption: 'not so good', confidence: 0.8 },
+    'struggling': { targetOption: 'bad', confidence: 0.85 },
+    'terrible': { targetOption: 'bad', confidence: 0.95 },
+    'awful': { targetOption: 'bad', confidence: 0.95 },
+  };
+
+  // Check for idiomatic expressions first
+  for (const [phrase, mapping] of Object.entries(idiomaticPhrases)) {
+    if (input.includes(phrase)) {
+      // Find best matching option
+      const matchedOption = question.options.find(opt =>
+        opt.toLowerCase().includes(mapping.targetOption)
+      );
+
+      if (matchedOption) {
+        return {
+          message: `Got it! I understand you mean "${matchedOption}". Let's move to the next question.`,
+          parsedValue: matchedOption,
+          confidence: mapping.confidence,
+        };
+      }
+    }
+  }
+
   // Simple keyword matching for demo purposes
   // In production, this would use actual LLM embeddings/reasoning
   const scores = question.options.map((option) => {
@@ -36,14 +77,14 @@ function processRadioResponse(
     // Option contains input
     else if (optionLower.includes(input)) score = 60;
 
-    // Common phrase mappings
+    // Common phrase mappings (excluding negations to avoid conflicts)
     else {
       const mappings: Record<string, string[]> = {
-        'good': ['great', 'excellent', 'fine', 'well', 'happy', 'positive'],
-        'okay': ['ok', 'alright', 'fine', 'decent', 'so-so', 'meh'],
-        'bad': ['not good', 'poor', 'terrible', 'awful', 'negative', 'sad'],
+        'good': ['great', 'excellent', 'fine', 'well', 'happy', 'positive', 'fantastic', 'wonderful'],
+        'okay': ['ok', 'alright', 'decent', 'meh', 'fair', 'average'],
+        'bad': ['poor', 'negative', 'sad', 'unwell', 'sick'],
         'yes': ['yeah', 'yep', 'sure', 'absolutely', 'definitely', 'correct'],
-        'no': ['nope', 'nah', 'negative', 'not really', 'never'],
+        'no': ['nope', 'nah', 'never'],
       };
 
       for (const [key, synonyms] of Object.entries(mappings)) {
