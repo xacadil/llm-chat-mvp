@@ -30,36 +30,46 @@ export default function RadioQuestion({ question, onSubmit }: RadioQuestionProps
   return (
     <div className="space-y-4">
       {/* Toggle between button and text input */}
-      <motion.div
-        className="flex gap-2 mb-4"
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        <motion.button
-          onClick={() => setInputMode('buttons')}
-          className={`px-3 py-1 rounded text-sm transition-colors ${
-            inputMode === 'buttons'
-              ? 'bg-primary text-white'
-              : 'bg-gray-200 text-gray-700'
-          }`}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+      <div className="space-y-2">
+        <motion.p
+          className="text-sm text-gray-600 font-medium"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.1 }}
         >
-          Select Option
-        </motion.button>
-        <motion.button
-          onClick={() => setInputMode('text')}
-          className={`px-3 py-1 rounded text-sm transition-colors ${
-            inputMode === 'text'
-              ? 'bg-primary text-white'
-              : 'bg-gray-200 text-gray-700'
-          }`}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+          💡 Choose your input method:
+        </motion.p>
+        <motion.div
+          className="flex gap-3"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
         >
-          Type Answer
-        </motion.button>
-      </motion.div>
+          <motion.button
+            onClick={() => setInputMode('buttons')}
+            className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              inputMode === 'buttons'
+                ? 'bg-primary text-white shadow-lg ring-2 ring-primary ring-opacity-50'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            📋 Select Option
+          </motion.button>
+          <motion.button
+            onClick={() => setInputMode('text')}
+            className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              inputMode === 'text'
+                ? 'bg-primary text-white shadow-lg ring-2 ring-primary ring-opacity-50'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            ✍️ Type Answer (AI)
+          </motion.button>
+        </motion.div>
+      </div>
 
       {inputMode === 'buttons' ? (
         <div className="space-y-3">
