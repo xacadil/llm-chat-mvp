@@ -38,8 +38,41 @@ export default function ConversationalSurvey({ survey }: ConversationalSurveyPro
   const [userInput, setUserInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [showCelebration, setShowCelebration] = useState(false);
+  const messageIdCounter = useRef(0);
 
   const currentQuestion = survey.questions[state.currentQuestionIndex];
+
+  // Generate unique message ID
+  const generateMessageId = (prefix: string) => {
+    messageIdCounter.current += 1;
+    return `${prefix}-${Date.now()}-${messageIdCounter.current}`;
+  };
+
+  // Helper to create question message
+  const createQuestionMessage = (question: Question): Message => {
+    let naturalContent = question.question;
+
+    // Add conversational flair based on question type
+    if (question.type === 'radio' && question.id === 'q1') {
+      naturalContent = "So, let's start with the basics - how are you feeling today?";
+    } else if (question.type === 'slider') {
+      naturalContent = question.question.replace('On a scale of', "I'd like to know on a scale of");
+    } else if (question.type === 'image_pin') {
+      naturalContent = question.question.replace('Please indicate', "Could you show me");
+    } else if (question.type === 'text') {
+      naturalContent = question.question;
+    }
+
+    return {
+      id: generateMessageId(`q-${question.id}`),
+      role: 'assistant',
+      content: naturalContent,
+      timestamp: new Date(),
+      questionId: question.id,
+      showQuickReplies: question.type === 'radio',
+      showInlineElement: ['slider', 'image_pin'].includes(question.type),
+    };
+  };
 
   // Auto-scroll to bottom
   const scrollToBottom = () => {
@@ -68,13 +101,13 @@ export default function ConversationalSurvey({ survey }: ConversationalSurveyPro
     // Create natural welcome that leads into first question
     const welcomeMessages: Message[] = [
       {
-        id: 'welcome-1',
+        id: generateMessageId('welcome'),
         role: 'assistant',
         content: `Hi! 👋 I'm your personal health assistant.`,
         timestamp: new Date(),
       },
       {
-        id: 'welcome-2',
+        id: generateMessageId('welcome'),
         role: 'assistant',
         content: "I'd like to learn about how you're feeling today. This will only take a few minutes, and you can answer however you prefer - click the buttons or just type naturally.",
         timestamp: new Date(),
@@ -88,30 +121,7 @@ export default function ConversationalSurvey({ survey }: ConversationalSurveyPro
   }, []);
 
   const askNaturalQuestion = (question: Question, previousMessages: Message[] = messages) => {
-    // Make questions sound more conversational
-    let naturalContent = question.question;
-
-    // Add conversational flair based on question type
-    if (question.type === 'radio' && question.id === 'q1') {
-      naturalContent = "So, let's start with the basics - how are you feeling today?";
-    } else if (question.type === 'slider') {
-      naturalContent = question.question.replace('On a scale of', "I'd like to know on a scale of");
-    } else if (question.type === 'image_pin') {
-      naturalContent = question.question.replace('Please indicate', "Could you show me");
-    } else if (question.type === 'text') {
-      naturalContent = question.question;
-    }
-
-    const questionMessage: Message = {
-      id: `q-${question.id}`,
-      role: 'assistant',
-      content: naturalContent,
-      timestamp: new Date(),
-      questionId: question.id,
-      showQuickReplies: question.type === 'radio',
-      showInlineElement: ['slider', 'image_pin'].includes(question.type),
-    };
-
+    const questionMessage = createQuestionMessage(question);
     setMessages([...previousMessages, questionMessage]);
   };
 
@@ -139,7 +149,7 @@ export default function ConversationalSurvey({ survey }: ConversationalSurveyPro
 
     // Add user message
     const userMessage: Message = {
-      id: `u-${Date.now()}`,
+      id: generateMessageId('user'),
       role: 'user',
       content: typeof value === 'object' && 'x' in value
         ? `📍 Selected location`
@@ -156,7 +166,7 @@ export default function ConversationalSurvey({ survey }: ConversationalSurveyPro
 
     // Add LLM acknowledgment
     const assistantMessage: Message = {
-      id: `a-${Date.now()}`,
+      id: generateMessageId('assistant'),
       role: 'assistant',
       content: llmResponse.message,
       timestamp: new Date(),
@@ -185,9 +195,12 @@ export default function ConversationalSurvey({ survey }: ConversationalSurveyPro
           isComplete: false,
         });
 
-        // Ask next question
+        // Ask next question - use callback form to get latest messages
         await new Promise((resolve) => setTimeout(resolve, 800));
-        askQuestion(nextQuestion, [...messages, userMessage, assistantMessage]);
+        setMessages((currentMessages) => {
+          const questionMessage = createQuestionMessage(nextQuestion);
+          return [...currentMessages, questionMessage];
+        });
       } else {
         // Survey complete
         setState({
@@ -201,13 +214,13 @@ export default function ConversationalSurvey({ survey }: ConversationalSurveyPro
         await new Promise((resolve) => setTimeout(resolve, 500));
 
         const completionMessage: Message = {
-          id: 'complete',
+          id: generateMessageId('complete'),
           role: 'assistant',
           content: "🎉 Thank you for completing the survey! Your responses have been recorded.",
           timestamp: new Date(),
         };
 
-        setMessages((prev) => [...prev, userMessage, assistantMessage, completionMessage]);
+        setMessages((prev) => [...prev, completionMessage]);
       }
     }
 
