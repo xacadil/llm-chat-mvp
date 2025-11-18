@@ -10,6 +10,10 @@ services:
       - ollama_data:/root/.ollama
     environment:
       - OLLAMA_HOST=0.0.0.0:11434
+      # Force GPU usage on Mac
+      - OLLAMA_GPU=1
+      - OLLAMA_NUM_PARALLEL=1
+      - OLLAMA_MAX_LOADED_MODELS=1
     restart: unless-stopped
     # For M1/M2/M3 Macs - Docker Desktop automatically uses Metal GPU
     # No additional GPU configuration needed on macOS
