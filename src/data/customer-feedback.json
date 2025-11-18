@@ -1,0 +1,44 @@
+{
+  "title": "Customer Feedback Survey",
+  "description": "Help us improve our service by sharing your experience.",
+  "questions": [
+    {
+      "id": "intro",
+      "type": "info",
+      "question": "Thank You!",
+      "content": "Thank you for choosing our service! Your feedback helps us improve. This quick survey will take about 2 minutes."
+    },
+    {
+      "id": "satisfaction",
+      "type": "radio",
+      "question": "How satisfied are you with our service?",
+      "options": ["Very satisfied", "Satisfied", "Neutral", "Dissatisfied", "Very dissatisfied"]
+    },
+    {
+      "id": "rating",
+      "type": "slider",
+      "question": "How likely are you to recommend us to a friend? (0-10)",
+      "min": 0,
+      "max": 10,
+      "step": 1
+    },
+    {
+      "id": "feedback",
+      "type": "text",
+      "question": "What did you like most about our service?",
+      "placeholder": "Share your thoughts..."
+    },
+    {
+      "id": "improvement",
+      "type": "text",
+      "question": "What could we improve?",
+      "placeholder": "Any suggestions are welcome..."
+    },
+    {
+      "id": "contact",
+      "type": "radio",
+      "question": "May we contact you about your feedback?",
+      "options": ["Yes, please", "No, thanks"]
+    }
+  ]
+}
