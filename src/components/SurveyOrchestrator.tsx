@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Survey, Response, SurveyState } from '@/types/survey';
-import { simulateLLMResponse, generateQuestionPrompt } from '@/lib/llmSimulator';
+import { processLLMResponse, getLLMMode } from '@/lib/llmProcessor';
+import { generateQuestionPrompt } from '@/lib/llmSimulator';
 import SurveyQuestion from './SurveyQuestion';
 
 interface Message {
@@ -59,10 +60,10 @@ export default function SurveyOrchestrator({ survey }: SurveyOrchestratorProps) 
 
     setMessages((prev) => [...prev, userMessage]);
 
-    // Simulate LLM processing
+    // Process with LLM (local Ollama or simulator)
     await new Promise((resolve) => setTimeout(resolve, 800));
 
-    const llmResponse = simulateLLMResponse(currentQuestion, value);
+    const llmResponse = await processLLMResponse(currentQuestion, value);
 
     // Add LLM response to messages
     const assistantMessage: Message = {

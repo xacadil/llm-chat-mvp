@@ -6,8 +6,11 @@ Get the LLM Survey Assistant running in 3 simple steps!
 
 - Node.js 18 or higher installed
 - npm (comes with Node.js)
+- *Optional*: Docker Desktop (for local LLM mode)
 
 ## Setup & Run
+
+### Option 1: Simulator Mode (Fastest)
 
 ```bash
 # 1. Install dependencies
@@ -20,7 +23,28 @@ npm run dev
 # Visit: http://localhost:3000
 ```
 
-That's it! The survey will start automatically.
+That's it! The survey will start automatically with a built-in simulator.
+
+### Option 2: Local LLM Mode (Better Responses)
+
+For more realistic AI responses using a local LLM:
+
+```bash
+# 1. Install dependencies
+npm install
+
+# 2. Setup Ollama (one-time, interactive)
+make setup-ollama
+# This starts Docker, downloads a 2GB model, and configures everything
+
+# 3. Start with local LLM
+make dev-with-llm
+
+# 4. Open your browser
+# Visit: http://localhost:3000
+```
+
+The local LLM provides much more natural and contextual responses!
 
 ## What You'll See
 

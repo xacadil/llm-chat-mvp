@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama-survey
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+    restart: unless-stopped
+    # For M1/M2/M3 Macs - Docker Desktop automatically uses Metal GPU
+    # No additional GPU configuration needed on macOS
+    deploy:
+      resources:
+        limits:
+          memory: 8G  # Adjust based on your model size
+        reservations:
+          memory: 4G
+
+volumes:
+  ollama_data:
+    driver: local

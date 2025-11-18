@@ -56,7 +56,9 @@ llm-chat-mvp/
 │   │   ├── ImagePinQuestion.tsx     # Image pin component
 │   │   └── InfoQuestion.tsx         # Info display component
 │   ├── lib/
-│   │   └── llmSimulator.ts     # LLM behavior simulation
+│   │   ├── llmSimulator.ts     # Pattern-based simulator (fallback)
+│   │   ├── llmProcessor.ts     # Main LLM router (Ollama/simulator)
+│   │   └── ollamaClient.ts     # Ollama API client
 │   ├── types/
 │   │   └── survey.ts           # TypeScript definitions
 │   └── data/
@@ -87,6 +89,59 @@ npm run dev
 ```
 
 3. Open [http://localhost:3000](http://localhost:3000) in your browser
+
+### LLM Modes
+
+The application supports two modes for processing natural language:
+
+#### 1. Simulator Mode (Default)
+No setup required! Uses built-in pattern matching for demos.
+```bash
+npm run dev
+```
+
+#### 2. Local LLM Mode (Recommended for Real Demos)
+Uses Ollama running locally in Docker with GPU acceleration.
+
+**Quick Setup (M1/M2 Macs):**
+```bash
+# One-command setup
+make setup-ollama
+
+# Start development with local LLM
+make dev-with-llm
+```
+
+**Manual Setup:**
+```bash
+# 1. Start Ollama in Docker
+docker-compose up -d ollama
+
+# 2. Pull a model
+docker exec ollama-survey ollama pull llama3.2:3b
+
+# 3. Enable local LLM
+cat > .env.local << EOF
+USE_LOCAL_LLM=true
+OLLAMA_URL=http://localhost:11434
+MODEL=llama3.2:3b
+EOF
+
+# 4. Run the app
+npm run dev
+```
+
+📖 **Detailed Guide**: See [DOCKER_SETUP.md](./DOCKER_SETUP.md) for complete Docker + M1 GPU setup
+
+**Makefile Commands:**
+```bash
+make help           # Show all available commands
+make setup-ollama   # Interactive Ollama setup
+make start-ollama   # Start Ollama container
+make stop-ollama    # Stop Ollama container
+make list-models    # List available models
+make dev-with-llm   # Start dev server with LLM enabled
+```
 
 ### Building for Production
 
