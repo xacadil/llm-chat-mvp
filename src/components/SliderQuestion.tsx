@@ -1,5 +1,9 @@
+'use client';
+
 import React, { useState } from 'react';
 import { SliderQuestion as SliderQuestionType } from '@/types/survey';
+import { motion } from 'framer-motion';
+import AnimatedButton from './animations/AnimatedButton';
 
 interface SliderQuestionProps {
   question: SliderQuestionType;
@@ -23,7 +27,6 @@ export default function SliderQuestion({ question, onSubmit }: SliderQuestionPro
       if (!isNaN(numValue) && numValue >= question.min && numValue <= question.max) {
         onSubmit(numValue);
       } else {
-        // Let LLM simulator handle natural language
         onSubmit(textInput as any);
       }
     }
@@ -31,32 +34,43 @@ export default function SliderQuestion({ question, onSubmit }: SliderQuestionPro
 
   return (
     <div className="space-y-4">
-      {/* Toggle between slider and text input */}
-      <div className="flex gap-2 mb-4">
-        <button
+      <motion.div
+        className="flex gap-2 mb-4"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        <motion.button
           onClick={() => setInputMode('slider')}
           className={`px-3 py-1 rounded text-sm ${
             inputMode === 'slider'
               ? 'bg-primary text-white'
               : 'bg-gray-200 text-gray-700'
           }`}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
         >
           Use Slider
-        </button>
-        <button
+        </motion.button>
+        <motion.button
           onClick={() => setInputMode('text')}
           className={`px-3 py-1 rounded text-sm ${
             inputMode === 'text'
               ? 'bg-primary text-white'
               : 'bg-gray-200 text-gray-700'
           }`}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
         >
           Type Answer
-        </button>
-      </div>
+        </motion.button>
+      </motion.div>
 
       {inputMode === 'slider' ? (
-        <div className="space-y-4">
+        <motion.div
+          className="space-y-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
           <div className="relative pt-6">
             <input
               type="range"
@@ -70,37 +84,47 @@ export default function SliderQuestion({ question, onSubmit }: SliderQuestionPro
 
             <div className="flex justify-between text-sm text-gray-600 mt-2">
               <span>{question.min}</span>
-              <span className="text-2xl font-bold text-primary">{value}</span>
+              <motion.span
+                className="text-3xl font-bold text-primary"
+                key={value}
+                initial={{ scale: 1.3 }}
+                animate={{ scale: 1 }}
+                transition={{ type: 'spring', stiffness: 300 }}
+              >
+                {value}
+              </motion.span>
               <span>{question.max}</span>
             </div>
           </div>
 
-          <button
-            onClick={handleSliderSubmit}
-            className="w-full mt-4 px-6 py-3 bg-primary text-white rounded-lg hover:bg-blue-600 transition-colors"
-          >
+          <AnimatedButton onClick={handleSliderSubmit} className="w-full mt-4">
             Continue with {value}
-          </button>
-        </div>
+          </AnimatedButton>
+        </motion.div>
       ) : (
-        <div className="space-y-3">
-          <input
+        <motion.div
+          className="space-y-3"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          <motion.input
             type="text"
             value={textInput}
             onChange={(e) => setTextInput(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleTextSubmit()}
             placeholder={`Enter a number (${question.min}-${question.max}) or describe naturally...`}
             className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-primary focus:outline-none"
+            whileFocus={{ scale: 1.01 }}
           />
 
-          <button
+          <AnimatedButton
             onClick={handleTextSubmit}
             disabled={!textInput.trim()}
-            className="w-full px-6 py-3 bg-primary text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            className="w-full"
           >
             Submit Answer
-          </button>
-        </div>
+          </AnimatedButton>
+        </motion.div>
       )}
 
       <style jsx>{`
@@ -111,6 +135,7 @@ export default function SliderQuestion({ question, onSubmit }: SliderQuestionPro
           border-radius: 50%;
           background: #3b82f6;
           cursor: pointer;
+          box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
         }
 
         .slider::-moz-range-thumb {
@@ -120,6 +145,7 @@ export default function SliderQuestion({ question, onSubmit }: SliderQuestionPro
           background: #3b82f6;
           cursor: pointer;
           border: none;
+          box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
         }
       `}</style>
     </div>

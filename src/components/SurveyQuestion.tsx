@@ -1,9 +1,11 @@
+'use client';
+
 import React from 'react';
 import { Question } from '@/types/survey';
 import RadioQuestion from './RadioQuestion';
 import SliderQuestion from './SliderQuestion';
 import TextQuestion from './TextQuestion';
-import ImagePinQuestion from './ImagePinQuestion';
+import ImagePinQuestion3D from './ImagePinQuestion3D';
 import InfoQuestion from './InfoQuestion';
 
 interface SurveyQuestionProps {
@@ -23,7 +25,7 @@ export default function SurveyQuestion({ question, onResponse }: SurveyQuestionP
       return <TextQuestion question={question} onSubmit={onResponse} />;
 
     case 'image_pin':
-      return <ImagePinQuestion question={question} onSubmit={onResponse} />;
+      return <ImagePinQuestion3D question={question} onSubmit={onResponse} />;
 
     case 'info':
       return <InfoQuestion question={question} onContinue={() => onResponse(true)} />;

@@ -2,9 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { Survey, Response, SurveyState } from '@/types/survey';
-import { processLLMResponse, getLLMMode } from '@/lib/llmProcessor';
+import { processLLMResponse } from '@/lib/llmProcessor';
 import { generateQuestionPrompt } from '@/lib/llmSimulator';
 import SurveyQuestion from './SurveyQuestion';
+import ParticleBackground from './animations/ParticleBackground';
+import QuestionTransition from './animations/QuestionTransition';
+import ProgressBar from './animations/ProgressBar';
+import SuccessCelebration from './animations/SuccessCelebration';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Message {
   role: 'assistant' | 'user';
@@ -25,6 +30,7 @@ export default function SurveyOrchestrator({ survey }: SurveyOrchestratorProps) 
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
 
   const currentQuestion = survey.questions[state.currentQuestionIndex];
 
@@ -54,6 +60,8 @@ export default function SurveyOrchestrator({ survey }: SurveyOrchestratorProps) 
       role: 'user',
       content: typeof value === 'object' && 'x' in value
         ? `Selected position at (${Math.round(value.x)}%, ${Math.round(value.y)}%)`
+        : typeof value === 'object'
+        ? JSON.stringify(value)
         : String(value),
       timestamp: new Date(),
     };
@@ -114,6 +122,8 @@ export default function SurveyOrchestrator({ survey }: SurveyOrchestratorProps) 
           isComplete: true,
         });
 
+        setShowCelebration(true);
+
         await new Promise((resolve) => setTimeout(resolve, 500));
 
         setMessages((prev) => [
@@ -131,88 +141,137 @@ export default function SurveyOrchestrator({ survey }: SurveyOrchestratorProps) 
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-8 px-4">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-8 px-4 relative overflow-hidden">
+      <ParticleBackground />
+      <SuccessCelebration show={showCelebration} />
+
+      <motion.div
+        className="max-w-4xl mx-auto relative z-10"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">{survey.title}</h1>
-          <div className="flex items-center justify-between">
-            <p className="text-gray-600">
-              Question {state.currentQuestionIndex + 1} of {survey.questions.length}
-            </p>
-            <div className="flex gap-1">
-              {survey.questions.map((_, idx) => (
-                <div
-                  key={idx}
-                  className={`w-8 h-2 rounded ${
-                    idx < state.currentQuestionIndex
-                      ? 'bg-green-500'
-                      : idx === state.currentQuestionIndex
-                      ? 'bg-primary'
-                      : 'bg-gray-200'
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
+        <motion.div
+          className="bg-white rounded-lg shadow-lg p-6 mb-6"
+          initial={{ y: -50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2, type: 'spring', stiffness: 100 }}
+        >
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">{survey.title}</h1>
+          <ProgressBar current={state.currentQuestionIndex} total={survey.questions.length} />
+        </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Chat/Message History */}
-          <div className="bg-white rounded-lg shadow-lg p-6">
+          <motion.div
+            className="bg-white rounded-lg shadow-lg p-6"
+            initial={{ x: -50, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.3 }}
+          >
             <h2 className="text-xl font-semibold mb-4 text-gray-900">Conversation</h2>
-            <div className="space-y-3 max-h-[500px] overflow-y-auto">
-              {messages.map((message, idx) => (
-                <div
-                  key={idx}
-                  className={`flex ${
-                    message.role === 'assistant' ? 'justify-start' : 'justify-end'
-                  }`}
-                >
-                  <div
-                    className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                      message.role === 'assistant'
-                        ? 'bg-gray-100 text-gray-900'
-                        : 'bg-primary text-white'
+            <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
+              <AnimatePresence>
+                {messages.map((message, idx) => (
+                  <motion.div
+                    key={idx}
+                    className={`flex ${
+                      message.role === 'assistant' ? 'justify-start' : 'justify-end'
                     }`}
+                    initial={{ opacity: 0, y: 20, scale: 0.8 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                   >
-                    <p className="text-sm">{message.content}</p>
-                    <p className="text-xs mt-1 opacity-70">
-                      {message.timestamp.toLocaleTimeString()}
-                    </p>
-                  </div>
-                </div>
-              ))}
+                    <motion.div
+                      className={`max-w-[80%] rounded-lg px-4 py-2 ${
+                        message.role === 'assistant'
+                          ? 'bg-gray-100 text-gray-900'
+                          : 'bg-primary text-white'
+                      }`}
+                      whileHover={{ scale: 1.02 }}
+                    >
+                      <p className="text-sm">{message.content}</p>
+                      <p className="text-xs mt-1 opacity-70">
+                        {message.timestamp.toLocaleTimeString()}
+                      </p>
+                    </motion.div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
 
               {isProcessing && (
-                <div className="flex justify-start">
+                <motion.div
+                  className="flex justify-start"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                >
                   <div className="bg-gray-100 rounded-lg px-4 py-2">
                     <div className="flex space-x-2">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100" />
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200" />
+                      <motion.div
+                        className="w-2 h-2 bg-gray-400 rounded-full"
+                        animate={{ y: [0, -8, 0] }}
+                        transition={{ duration: 0.6, repeat: Infinity, delay: 0 }}
+                      />
+                      <motion.div
+                        className="w-2 h-2 bg-gray-400 rounded-full"
+                        animate={{ y: [0, -8, 0] }}
+                        transition={{ duration: 0.6, repeat: Infinity, delay: 0.2 }}
+                      />
+                      <motion.div
+                        className="w-2 h-2 bg-gray-400 rounded-full"
+                        animate={{ y: [0, -8, 0] }}
+                        transition={{ duration: 0.6, repeat: Infinity, delay: 0.4 }}
+                      />
                     </div>
                   </div>
-                </div>
+                </motion.div>
               )}
             </div>
-          </div>
+          </motion.div>
 
           {/* Question UI */}
-          <div className="bg-white rounded-lg shadow-lg p-6">
+          <motion.div
+            className="bg-white rounded-lg shadow-lg p-6"
+            initial={{ x: 50, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.4 }}
+          >
             {!state.isComplete ? (
-              <>
-                <h2 className="text-xl font-semibold mb-4 text-gray-900">
+              <QuestionTransition questionId={currentQuestion.id}>
+                <motion.h2
+                  className="text-xl font-semibold mb-4 text-gray-900"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                >
                   {currentQuestion.question}
-                </h2>
+                </motion.h2>
                 <SurveyQuestion
                   question={currentQuestion}
                   onResponse={handleResponse}
                 />
-              </>
+              </QuestionTransition>
             ) : (
-              <div className="space-y-4">
-                <h2 className="text-2xl font-bold text-green-600">Survey Complete!</h2>
+              <motion.div
+                className="space-y-4"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ type: 'spring', stiffness: 200 }}
+              >
+                <motion.h2
+                  className="text-2xl font-bold text-green-600"
+                  animate={{
+                    scale: [1, 1.05, 1],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                  }}
+                >
+                  Survey Complete!
+                </motion.h2>
                 <p className="text-gray-600">
                   Thank you for completing the survey. Here's a summary of your responses:
                 </p>
@@ -221,7 +280,6 @@ export default function SurveyOrchestrator({ survey }: SurveyOrchestratorProps) 
                   {state.responses.map((response, idx) => {
                     const question = survey.questions.find((q) => q.id === response.questionId);
 
-                    // Format response value based on type
                     let displayValue = '';
                     if (response.type === 'image_pin') {
                       displayValue = `Position: (${Math.round(response.x)}%, ${Math.round(response.y)}%)`;
@@ -234,28 +292,40 @@ export default function SurveyOrchestrator({ survey }: SurveyOrchestratorProps) 
                     }
 
                     return (
-                      <div key={idx} className="border-l-4 border-green-500 pl-4 py-2">
+                      <motion.div
+                        key={idx}
+                        className="border-l-4 border-green-500 pl-4 py-2 bg-green-50 rounded"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: idx * 0.1 }}
+                        whileHover={{ x: 5, backgroundColor: '#dcfce7' }}
+                      >
                         <p className="font-semibold text-gray-900">{question?.question}</p>
                         <p className="text-gray-600">{displayValue}</p>
-                      </div>
+                      </motion.div>
                     );
                   })}
                 </div>
 
-                <button
+                <motion.button
                   onClick={() => {
                     console.log('Survey responses:', state.responses);
                     alert('Responses logged to console');
                   }}
-                  className="w-full mt-6 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  className="w-full mt-6 px-6 py-3 bg-green-600 text-white rounded-lg font-semibold shadow-lg"
+                  whileHover={{ scale: 1.02, backgroundColor: '#16a34a' }}
+                  whileTap={{ scale: 0.98 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
                 >
                   View JSON Output (Console)
-                </button>
-              </div>
+                </motion.button>
+              </motion.div>
             )}
-          </div>
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
