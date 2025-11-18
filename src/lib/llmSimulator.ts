@@ -86,9 +86,9 @@ function processRadioResponse(
  */
 function processSliderResponse(
   question: SliderQuestion,
-  userInput: string
+  userInput: string | number
 ): LLMResponse {
-  const input = userInput.toLowerCase().trim();
+  const input = String(userInput).toLowerCase().trim();
 
   // Extract number from input
   const numberMatch = input.match(/\d+/);
