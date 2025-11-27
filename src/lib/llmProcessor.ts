@@ -219,9 +219,13 @@ Respond with just the acknowledgment message, no JSON needed.`;
  */
 export async function processLLMResponse(
   question: Question,
-  userInput: string | { x: number; y: number }
+  userInput: string | { x: number; y: number },
+  mode?: 'ollama' | 'simulator'
 ): Promise<LLMResponse> {
-  if (USE_LOCAL_LLM) {
+  // Use runtime mode if provided, otherwise fall back to env variable
+  const useOllama = mode === 'ollama' || (mode === undefined && USE_LOCAL_LLM);
+
+  if (useOllama) {
     // Check if Ollama is available
     const isHealthy = await checkOllamaHealth();
 

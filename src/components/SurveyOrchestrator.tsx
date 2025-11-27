@@ -4,11 +4,13 @@ import React, { useState, useEffect } from 'react';
 import { Survey, Response, SurveyState } from '@/types/survey';
 import { processLLMResponse } from '@/lib/llmProcessor';
 import { generateQuestionPrompt } from '@/lib/llmSimulator';
+import { useLLM } from '@/contexts/LLMContext';
 import SurveyQuestion from './SurveyQuestion';
 import ParticleBackground from './animations/ParticleBackground';
 import QuestionTransition from './animations/QuestionTransition';
 import ProgressBar from './animations/ProgressBar';
 import SuccessCelebration from './animations/SuccessCelebration';
+import LLMToggle from './LLMToggle';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface Message {
@@ -22,6 +24,8 @@ interface SurveyOrchestratorProps {
 }
 
 export default function SurveyOrchestrator({ survey }: SurveyOrchestratorProps) {
+  const { mode } = useLLM();
+
   const [state, setState] = useState<SurveyState>({
     currentQuestionIndex: 0,
     responses: [],
@@ -71,7 +75,7 @@ export default function SurveyOrchestrator({ survey }: SurveyOrchestratorProps) 
     // Process with LLM (local Ollama or simulator)
     await new Promise((resolve) => setTimeout(resolve, 800));
 
-    const llmResponse = await processLLMResponse(currentQuestion, value);
+    const llmResponse = await processLLMResponse(currentQuestion, value, mode);
 
     // Add LLM response to messages
     const assistantMessage: Message = {
@@ -161,6 +165,11 @@ export default function SurveyOrchestrator({ survey }: SurveyOrchestratorProps) 
           <h1 className="text-3xl font-bold text-gray-900 mb-4">{survey.title}</h1>
           <ProgressBar current={state.currentQuestionIndex} total={survey.questions.length} />
         </motion.div>
+
+        {/* LLM Toggle */}
+        <div className="mb-6">
+          <LLMToggle />
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Chat/Message History */}

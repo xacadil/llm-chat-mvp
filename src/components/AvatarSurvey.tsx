@@ -3,9 +3,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Survey, Response, SurveyState, Question } from '@/types/survey';
 import { processLLMResponse } from '@/lib/llmProcessor';
+import { useLLM } from '@/contexts/LLMContext';
 import ParticleBackground from './animations/ParticleBackground';
 import SuccessCelebration from './animations/SuccessCelebration';
 import AnimatedAvatar from './AnimatedAvatar';
+import LLMToggle from './LLMToggle';
 import { motion, AnimatePresence } from 'framer-motion';
 import ChatMessage from './chat/ChatMessage';
 import ChatInput from './chat/ChatInput';
@@ -27,6 +29,8 @@ interface AvatarSurveyProps {
 }
 
 export default function AvatarSurvey({ survey }: AvatarSurveyProps) {
+  const { mode } = useLLM();
+
   const [state, setState] = useState<SurveyState>({
     currentQuestionIndex: 0,
     responses: [],
@@ -167,7 +171,7 @@ export default function AvatarSurvey({ survey }: AvatarSurveyProps) {
     // Process with LLM
     await new Promise((resolve) => setTimeout(resolve, 600));
 
-    const llmResponse = await processLLMResponse(currentQuestion, value);
+    const llmResponse = await processLLMResponse(currentQuestion, value, mode);
 
     // Add LLM acknowledgment
     const assistantMessage: Message = {
@@ -265,6 +269,11 @@ export default function AvatarSurvey({ survey }: AvatarSurveyProps) {
               </span>
             </div>
           </motion.div>
+
+          {/* LLM Toggle */}
+          <div className="px-6 pt-4">
+            <LLMToggle />
+          </div>
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
