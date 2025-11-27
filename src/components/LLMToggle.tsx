@@ -4,7 +4,12 @@ import { useLLM } from '@/contexts/LLMContext';
 import { motion } from 'framer-motion';
 
 export default function LLMToggle() {
-  const { mode, setMode, isOllamaAvailable } = useLLM();
+  const { mode, setMode, isOllamaAvailable, recheckOllama } = useLLM();
+
+  const handleRecheck = async () => {
+    console.log('🔄 Manual Ollama recheck requested');
+    await recheckOllama();
+  };
 
   return (
     <motion.div
@@ -14,7 +19,16 @@ export default function LLMToggle() {
     >
       <div className="flex items-center justify-between gap-4">
         <div className="flex-1">
-          <h3 className="text-sm font-semibold text-gray-900 mb-1">AI Response Mode</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-gray-900">AI Response Mode</h3>
+            <button
+              onClick={handleRecheck}
+              className="text-xs text-blue-600 hover:text-blue-700 underline"
+              title="Recheck Ollama availability"
+            >
+              🔄 Refresh
+            </button>
+          </div>
           <p className="text-xs text-gray-600">
             Choose between pattern matching or smart LLM responses
           </p>

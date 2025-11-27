@@ -9,6 +9,7 @@ interface LLMContextType {
   setMode: (mode: LLMMode) => void;
   isOllamaAvailable: boolean;
   setIsOllamaAvailable: (available: boolean) => void;
+  recheckOllama: () => Promise<void>;
 }
 
 const LLMContext = createContext<LLMContextType | undefined>(undefined);
@@ -30,9 +31,16 @@ export function LLMProvider({ children }: { children: React.ReactNode }) {
 
   const checkOllamaHealth = async () => {
     try {
+      console.log('🔍 Checking Ollama health at http://localhost:11434/api/tags');
       const response = await fetch('http://localhost:11434/api/tags');
+      console.log('✅ Ollama response status:', response.status, response.ok);
       setIsOllamaAvailable(response.ok);
-    } catch {
+      if (response.ok) {
+        const data = await response.json();
+        console.log('🎯 Ollama models:', data.models?.map((m: any) => m.name));
+      }
+    } catch (error) {
+      console.error('❌ Ollama health check failed:', error);
       setIsOllamaAvailable(false);
     }
   };
@@ -43,7 +51,7 @@ export function LLMProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <LLMContext.Provider value={{ mode, setMode, isOllamaAvailable, setIsOllamaAvailable }}>
+    <LLMContext.Provider value={{ mode, setMode, isOllamaAvailable, setIsOllamaAvailable, recheckOllama: checkOllamaHealth }}>
       {children}
     </LLMContext.Provider>
   );
