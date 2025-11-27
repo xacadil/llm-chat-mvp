@@ -22,6 +22,7 @@ interface Message {
   questionId?: string;
   showQuickReplies?: boolean;
   showInlineElement?: boolean;
+  usedMode?: 'ollama' | 'simulator';
 }
 
 interface AvatarSurveyProps {
@@ -179,6 +180,7 @@ export default function AvatarSurvey({ survey }: AvatarSurveyProps) {
       role: 'assistant',
       content: llmResponse.message,
       timestamp: new Date(),
+      usedMode: llmResponse.usedMode,
     };
 
     setMessages((prev) => [...prev, assistantMessage]);

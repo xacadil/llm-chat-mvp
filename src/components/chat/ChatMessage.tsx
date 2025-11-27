@@ -8,6 +8,7 @@ interface Message {
   role: 'assistant' | 'user';
   content: string;
   timestamp: Date;
+  usedMode?: 'ollama' | 'simulator';
 }
 
 interface ChatMessageProps {
@@ -38,20 +39,38 @@ export default function ChatMessage({ message }: ChatMessageProps) {
         </motion.div>
 
         {/* Message bubble */}
-        <motion.div
-          className={`rounded-2xl px-4 py-3 shadow-md ${
-            isUser
-              ? 'bg-gradient-to-br from-blue-500 to-purple-500 text-white'
-              : 'bg-white text-gray-900'
-          }`}
-          whileHover={{ scale: 1.02 }}
-          transition={{ type: 'spring', stiffness: 400 }}
-        >
-          <p className="text-sm leading-relaxed">{message.content}</p>
-          <p className={`text-xs mt-1 ${isUser ? 'text-blue-100' : 'text-gray-400'}`}>
-            {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-          </p>
-        </motion.div>
+        <div className="flex flex-col gap-1">
+          <motion.div
+            className={`rounded-2xl px-4 py-3 shadow-md ${
+              isUser
+                ? 'bg-gradient-to-br from-blue-500 to-purple-500 text-white'
+                : 'bg-white text-gray-900'
+            }`}
+            whileHover={{ scale: 1.02 }}
+            transition={{ type: 'spring', stiffness: 400 }}
+          >
+            <p className="text-sm leading-relaxed">{message.content}</p>
+            <p className={`text-xs mt-1 ${isUser ? 'text-blue-100' : 'text-gray-400'}`}>
+              {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </p>
+          </motion.div>
+
+          {/* Mode Badge (only for assistant messages) */}
+          {!isUser && message.usedMode && (
+            <motion.div
+              className={`text-xs px-2 py-1 rounded-full w-fit ${
+                message.usedMode === 'ollama'
+                  ? 'bg-green-100 text-green-700'
+                  : 'bg-blue-100 text-blue-700'
+              }`}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              {message.usedMode === 'ollama' ? '🧠 Smart LLM' : '📋 Pattern Match'}
+            </motion.div>
+          )}
+        </div>
       </div>
     </motion.div>
   );

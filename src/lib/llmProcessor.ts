@@ -225,19 +225,27 @@ export async function processLLMResponse(
   // Use runtime mode if provided, otherwise fall back to env variable
   const useOllama = mode === 'ollama' || (mode === undefined && USE_LOCAL_LLM);
 
+  console.log('🔍 LLM Mode Requested:', mode || 'default');
+  console.log('🎯 Will attempt Ollama:', useOllama);
+
   if (useOllama) {
     // Check if Ollama is available
     const isHealthy = await checkOllamaHealth();
+    console.log('💚 Ollama Health Check:', isHealthy ? '✅ Available' : '❌ Unavailable');
 
     if (isHealthy) {
-      return processWithOllama(question, userInput);
+      console.log('🧠 Using SMART LLM (Ollama)');
+      const response = await processWithOllama(question, userInput);
+      return { ...response, usedMode: 'ollama' };
     } else {
-      console.warn('Ollama not available, falling back to simulator');
+      console.warn('⚠️ Ollama not available, falling back to simulator');
     }
   }
 
   // Use simulator as default/fallback
-  return simulatorResponse(question, userInput);
+  console.log('📋 Using PATTERN MATCH (Simulator)');
+  const response = simulatorResponse(question, userInput);
+  return { ...response, usedMode: 'simulator' };
 }
 
 /**

@@ -100,6 +100,7 @@ export interface LLMResponse {
   message: string;
   parsedValue?: any;
   confidence?: number;
+  usedMode?: 'ollama' | 'simulator'; // Track which mode was actually used
 }
 
 // Survey state
