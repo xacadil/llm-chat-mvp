@@ -106,8 +106,39 @@ function processRadioResponse(
   const bestMatch = scores.reduce((a, b) => (a.score > b.score ? a : b));
 
   if (bestMatch.score > 0) {
+    // Generate empathetic response based on the selected option
+    const optionLower = bestMatch.option.toLowerCase();
+    let message = '';
+
+    // Positive responses
+    if (optionLower.includes('great') || optionLower.includes('excellent')) {
+      message = `That's wonderful! I'm so glad you're feeling ${bestMatch.option.toLowerCase()}! 😊 Let's continue.`;
+    }
+    else if (optionLower.includes('good') || optionLower.includes('fine') || optionLower.includes('well')) {
+      message = `Great to hear you're feeling ${bestMatch.option.toLowerCase()}! Thanks for sharing that.`;
+    }
+    // Neutral responses
+    else if (optionLower.includes('okay') || optionLower.includes('alright')) {
+      message = `Got it, ${bestMatch.option.toLowerCase()}. I appreciate your honesty! Let's move forward.`;
+    }
+    // Negative responses
+    else if (optionLower.includes('not so good') || optionLower.includes('not great')) {
+      message = `I hear you. ${bestMatch.option} days can be tough. Thank you for sharing how you're feeling.`;
+    }
+    else if (optionLower.includes('bad') || optionLower.includes('terrible') || optionLower.includes('awful')) {
+      message = `I'm sorry you're feeling ${bestMatch.option.toLowerCase()}. 😔 Thanks for being open with me about it.`;
+    }
+    // Time-based responses (for duration questions)
+    else if (optionLower.includes('day') || optionLower.includes('week') || optionLower.includes('month')) {
+      message = `Got it, "${bestMatch.option}". That's helpful context - thank you!`;
+    }
+    // Default
+    else {
+      message = `Perfect! I understand you mean "${bestMatch.option}". Let's keep going! ✨`;
+    }
+
     return {
-      message: `Got it! I understand you mean "${bestMatch.option}". Let's move to the next question.`,
+      message,
       parsedValue: bestMatch.option,
       confidence: bestMatch.score / 100,
     };
@@ -115,7 +146,7 @@ function processRadioResponse(
 
   // No match found
   return {
-    message: `I'm not sure which option you meant. Could you clarify? The options are: ${question.options.join(', ')}`,
+    message: `Hmm, I'm not quite sure which option you meant. Could you try again? The options are: ${question.options.join(', ')}`,
     parsedValue: null,
     confidence: 0,
   };
@@ -138,17 +169,43 @@ function processSliderResponse(
     const value = parseInt(numberMatch[0]);
 
     if (value >= question.min && value <= question.max) {
-      // Generate contextual response based on value
+      // Generate empathetic response based on context and value
       let message = '';
       const range = question.max - question.min;
       const relative = (value - question.min) / range;
+      const questionText = question.question.toLowerCase();
 
-      if (relative < 0.3) {
-        message = `Thanks for sharing. A ${value} is on the lower end - that's noted.`;
-      } else if (relative < 0.7) {
-        message = `I see, a ${value}. That's somewhere in the middle range.`;
+      // Detect if it's a pain scale vs energy/positive scale
+      const isPainScale = questionText.includes('pain') || questionText.includes('discomfort');
+      const isEnergyScale = questionText.includes('energy') || questionText.includes('feel');
+
+      if (isPainScale) {
+        // For pain: low is good, high is concerning
+        if (relative < 0.3) {
+          message = `That's great! A ${value} is pretty minimal on the pain scale. 😊`;
+        } else if (relative < 0.7) {
+          message = `I see, a ${value}. That's moderate - definitely something to keep an eye on.`;
+        } else {
+          message = `I hear you - ${value} is quite significant. Thank you for being honest about your pain level. 😔`;
+        }
+      } else if (isEnergyScale) {
+        // For energy: high is good, low is concerning
+        if (relative < 0.3) {
+          message = `A ${value}... that sounds pretty low. I hope you can get some rest soon! 💤`;
+        } else if (relative < 0.7) {
+          message = `Got it, ${value}. That's moderate energy - not bad, but room for improvement!`;
+        } else {
+          message = `Awesome! ${value} is great energy! I'm glad you're feeling energized today! ⚡`;
+        }
       } else {
-        message = `Got it, ${value} - that's on the higher side. Thanks for letting me know.`;
+        // Generic responses
+        if (relative < 0.3) {
+          message = `Thanks for sharing. A ${value} is on the lower end - I've noted that.`;
+        } else if (relative < 0.7) {
+          message = `I see, a ${value}. That's somewhere in the middle range.`;
+        } else {
+          message = `Got it, ${value} - that's on the higher side. Thanks for letting me know!`;
+        }
       }
 
       return {
@@ -192,18 +249,38 @@ function processSliderResponse(
 
 /**
  * Process text question responses
- * Simply acknowledges and stores the input
+ * Acknowledges with empathy based on content
  */
 function processTextResponse(userInput: string): LLMResponse {
+  const input = userInput.toLowerCase();
   const wordCount = userInput.trim().split(/\s+/).length;
 
+  // Detect sentiment and keywords for empathetic responses
   let message = '';
-  if (wordCount < 3) {
-    message = 'Thanks for that brief answer! Moving on...';
+
+  // Check for pain/discomfort keywords
+  if (input.includes('pain') || input.includes('hurt') || input.includes('ache') || input.includes('sore')) {
+    message = "I hear you - dealing with pain is really challenging. Thank you for sharing that with me.";
+  }
+  // Check for positive keywords
+  else if (input.includes('better') || input.includes('improving') || input.includes('good') || input.includes('fine')) {
+    message = "That's great to hear! I'm glad things are improving. Thanks for letting me know!";
+  }
+  // Check for concern keywords
+  else if (input.includes('worried') || input.includes('concerned') || input.includes('afraid') || input.includes('anxious')) {
+    message = "I understand your concerns. Thank you for being open about how you're feeling.";
+  }
+  // Check for fatigue keywords
+  else if (input.includes('tired') || input.includes('exhausted') || input.includes('fatigue') || input.includes('weak')) {
+    message = "Fatigue can really affect everything. I appreciate you sharing this important information.";
+  }
+  // Default based on length
+  else if (wordCount < 3) {
+    message = 'Got it! Thanks for that. Let\'s keep going.';
   } else if (wordCount < 20) {
-    message = 'Thank you for sharing that. Let\'s continue.';
+    message = 'Thank you for sharing that with me. I really appreciate your openness!';
   } else {
-    message = 'I appreciate the detailed response. Let me move us to the next question.';
+    message = 'Wow, thank you for the detailed response! That really helps me understand your situation better.';
   }
 
   return {
@@ -215,15 +292,56 @@ function processTextResponse(userInput: string): LLMResponse {
 
 /**
  * Process image pin responses
- * Interprets the selected coordinates
+ * Interprets the selected body part
  */
-function processImagePinResponse(x: number, y: number): LLMResponse {
-  // In a real implementation, this might use image analysis
-  // to describe what body part was selected, etc.
+function processImagePinResponse(bodyPartOrCoords: string | { x: number; y: number }): LLMResponse {
+  // Handle old format (coordinates) or new format (body part name)
+  let bodyPart: string;
+
+  if (typeof bodyPartOrCoords === 'string') {
+    bodyPart = bodyPartOrCoords;
+  } else {
+    // Fallback for coordinate format
+    return {
+      message: `I've noted the location you indicated. Thank you for showing me!`,
+      parsedValue: bodyPartOrCoords,
+      confidence: 1.0,
+    };
+  }
+
+  // Format body part name nicely
+  const formattedPart = bodyPart.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+  // Empathetic responses based on body part
+  const responses: Record<string, string> = {
+    'head': `Got it, you're experiencing discomfort in your ${formattedPart}. I've noted that - headaches can be really tough! 😔`,
+    'neck': `I understand, ${formattedPart} pain can be quite uncomfortable. Thanks for showing me where it hurts.`,
+    'chest': `Thank you for letting me know about your ${formattedPart}. I've noted this important information.`,
+    'stomach': `I see, your ${formattedPart} area. That must be uncomfortable. I've got that recorded. 🩺`,
+    'abdomen': `Got it, your ${formattedPart}. Digestive issues can be really bothersome. Thanks for sharing.`,
+    'back': `${formattedPart} pain noted. That's a really common issue and I know it can be quite limiting!`,
+    'shoulder': `Got it, your ${formattedPart}. I know that can really affect your day. Thanks for pinpointing it! 💪`,
+    'arm': `I've noted your ${formattedPart}. Thanks for showing me exactly where the discomfort is.`,
+    'hand': `Your ${formattedPart}, understood. That must make daily tasks challenging. I've recorded this.`,
+    'leg': `${formattedPart} discomfort noted. I appreciate you taking the time to show me the exact area.`,
+    'knee': `Your ${formattedPart}, understood. That must make movement difficult. I've recorded this. 🦵`,
+    'foot': `Got it, your ${formattedPart}. I know that can really affect mobility. Thanks for sharing!`,
+    'ankle': `${formattedPart} pain noted. That can make walking really challenging. Thanks for pointing it out.`,
+  };
+
+  // Find matching response or use default
+  let message = `I've noted the ${formattedPart} area. Thank you for showing me where you're experiencing discomfort! 📍`;
+
+  for (const [key, response] of Object.entries(responses)) {
+    if (bodyPart.toLowerCase().includes(key)) {
+      message = response;
+      break;
+    }
+  }
 
   return {
-    message: `I've noted the location you selected (x: ${Math.round(x)}, y: ${Math.round(y)}). Thank you!`,
-    parsedValue: { x, y },
+    message,
+    parsedValue: bodyPart,
     confidence: 1.0,
   };
 }
@@ -247,8 +365,8 @@ export function simulateLLMResponse(
       return processTextResponse(userInput as string);
 
     case 'image_pin':
-      const coords = userInput as { x: number; y: number };
-      return processImagePinResponse(coords.x, coords.y);
+      // Handle both string (body part name) and coordinate format
+      return processImagePinResponse(userInput as string | { x: number; y: number });
 
     case 'info':
       return {
