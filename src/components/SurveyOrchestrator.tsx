@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { Survey, Response, SurveyState } from '@/types/survey';
 import { processLLMResponse, getLLMMode } from '@/lib/llmProcessor';
 import { generateQuestionPrompt } from '@/lib/llmSimulator';
@@ -165,10 +166,24 @@ export default function SurveyOrchestrator({ survey }: SurveyOrchestratorProps) 
               {messages.map((message, idx) => (
                 <div
                   key={idx}
-                  className={`flex ${
+                  className={`flex items-end gap-2 ${
                     message.role === 'assistant' ? 'justify-start' : 'justify-end'
                   }`}
                 >
+                  {message.role === 'assistant' && (
+                    <div className="flex-shrink-0 mb-1">
+                      <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-blue-400 shadow-md avatar-float">
+                        <Image
+                          src="/images/atagar-avatar.svg"
+                          alt="Assistant Avatar"
+                          width={40}
+                          height={40}
+                          className="object-cover"
+                          priority
+                        />
+                      </div>
+                    </div>
+                  )}
                   <div
                     className={`max-w-[80%] rounded-lg px-4 py-2 ${
                       message.role === 'assistant'
@@ -185,7 +200,19 @@ export default function SurveyOrchestrator({ survey }: SurveyOrchestratorProps) 
               ))}
 
               {isProcessing && (
-                <div className="flex justify-start">
+                <div className="flex items-end gap-2 justify-start">
+                  <div className="flex-shrink-0 mb-1">
+                    <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-blue-400 shadow-md avatar-pulse">
+                      <Image
+                        src="/images/atagar-avatar.svg"
+                        alt="Assistant Avatar"
+                        width={40}
+                        height={40}
+                        className="object-cover"
+                        priority
+                      />
+                    </div>
+                  </div>
                   <div className="bg-gray-100 rounded-lg px-4 py-2">
                     <div className="flex space-x-2">
                       <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
